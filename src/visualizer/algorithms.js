@@ -1,23 +1,12 @@
-export const binarySort = array =>{
-    let size = array.length(); // get length of array for sort 
-    let done = false; // flag to detect swap in loop 
-    let temp = 0;
+function* bubble(array){
 
-    while(done === false){
-        // starts as if no swaps have been made 
-        done = true;
+    let size= array.length;
+    
+    for(let i = 0; i < size -1; i++){
 
-        for(let i = 0; i < size-1; i++){
-            //swap
-            if(array[i] > array[i+1]){
-                temp = array[i]
-                array[i] = array[i+1]
-                array[i+1] = temp
-                done = false
-            }
-            
+        for(let j = 0; j < size - 1 - i; j ++){
+            [array[j], array[j+1]] = [array[j+1], array[j]]
+            yield [j,j+1]; 
         }
     }
-
-
 }
