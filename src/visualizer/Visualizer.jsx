@@ -16,8 +16,7 @@ export default class Visualizer extends React.Component{
 
         this.bubble = this.bubble.bind(this)
         this.bubbleSortState = undefined;
-        this.bubbleSortPosition; 
-
+        this.moves = []
     }
 
     componentDidMount(){
@@ -46,20 +45,34 @@ export default class Visualizer extends React.Component{
                 if(array[j] > array[j+1]){
                     [array[j], array[j+1]] = [array[j+1], array[j]]
                     yield [j,j+1,true]
-
                 }else{
                     yield [j, j+1, false]
                 }
             }
         }
+        this.bubbleSortState = undefined
     }
 
-    bubbleSort = () => {
+    bubbleSort = async() => {
+        let state
+        let done = false 
+        const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms))
         if(this.bubbleSortState === undefined){
             this.bubbleSortState = this.bubble()
         }
-        this.bubbleSortPosition = this.bubbleSortState.next().value
-        console.log(this.bubbleSortPosition)
+        console.log(this.state.array)
+        while(done === false){
+            state = this.bubbleSortState.next()
+
+            if(state === undefined){
+                done = false
+            }else{
+                done = state.done    
+            }
+
+            this.setState({array:this.state.array})
+        }
+        
     }
     
     
@@ -72,15 +85,16 @@ export default class Visualizer extends React.Component{
 
     render = () => {
         const {array} = this.state;
+        const bars = array.map((value,index) =>(
+            <div className = "Bar" key = {index} style= {{height: `${value}px`}}>
+                
+            </div>
+        )) 
        
         return(
             <div className='main'>
             <div className = "container">
-                {array.map((value,index) =>(
-                    <div className = "Bar" key = {index} style= {{height: `${value}px`}}>
-                        
-                    </div>
-                ))} 
+                {bars}
             </div>
             <button onClick= {()=>this.generateSet(this.state.arraySize)}>Generate Set</button>
             <input id ="slider" 

@@ -1,0 +1,15 @@
+.container{
+    position: absolute; 
+    align-content: center;
+    left: 100px;
+    top: 100px;
+}
+
+.Bar{
+    display: inline-block;
+    width: 4px; 
+    background-color: aqua;
+    margin : 0 3px;
+
+
+}
