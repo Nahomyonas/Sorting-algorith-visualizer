@@ -1,7 +1,7 @@
 import React from 'react'; 
 import "./Visualizer.css"
 
-const ARRAY_SIZE = 120;
+const ARRAY_SIZE = 50;
 
 
 export default class Visualizer extends React.Component{
@@ -37,12 +37,12 @@ export default class Visualizer extends React.Component{
 
     *bubble(){
         let size= this.state.array.length;
-        let {array} = this.state
+        let array = this.state.array
     
         for(let i = 0; i < size -1; i++){
     
             for(let j = 0; j < size - 1 - i; j ++){
-                if(array[j] > array[j+1]){
+                if(array[j] < array[j+1]){
                     [array[j], array[j+1]] = [array[j+1], array[j]]
                     yield [j,j+1,true]
                 }else{
@@ -60,7 +60,7 @@ export default class Visualizer extends React.Component{
         if(this.bubbleSortState === undefined){
             this.bubbleSortState = this.bubble()
         }
-        console.log(this.state.array)
+        
         while(done === false){
             state = this.bubbleSortState.next()
 
@@ -69,6 +69,12 @@ export default class Visualizer extends React.Component{
             }else{
                 done = state.done    
             }
+
+            let arrayBars= document.getElementsByClassName('Bar')
+            arrayBars[state.value[0]].style.backgroundColor = 'red'
+            await wait(1);
+            
+            arrayBars[state.value[0]].style.backgroundColor = 'aqua'
 
             this.setState({array:this.state.array})
         }
@@ -84,9 +90,8 @@ export default class Visualizer extends React.Component{
     }
 
     render = () => {
-        const {array} = this.state;
-        const bars = array.map((value,index) =>(
-            <div className = "Bar" key = {index} style= {{height: `${value}px`}}>
+        this.bars = this.state.array.map((value,index) =>(
+            <div className = "Bar" key = {index} id = {index} style= {{height: `${value}px`}}>
                 
             </div>
         )) 
@@ -94,7 +99,7 @@ export default class Visualizer extends React.Component{
         return(
             <div className='main'>
             <div className = "container">
-                {bars}
+                {this.bars}
             </div>
             <button onClick= {()=>this.generateSet(this.state.arraySize)}>Generate Set</button>
             <input id ="slider" 
