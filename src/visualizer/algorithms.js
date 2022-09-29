@@ -1,4 +1,4 @@
-function* bubble(array){
+function* bubbleS(array){
 
     let size= array.length;
     
@@ -10,3 +10,4 @@ function* bubble(array){
         }
     }
 }
+

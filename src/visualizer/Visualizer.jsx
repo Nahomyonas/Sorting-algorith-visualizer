@@ -12,19 +12,29 @@ export default class Visualizer extends React.Component{
         this.state = {
             array : [],
             arraySize: ARRAY_SIZE,
+            arraySorted: false
         }
 
-        this.bubble = this.bubble.bind(this)
-        this.bubbleSortState = undefined;
-        this.moves = []
+        this.selection = this.selection.bind(this) // binding selection sort algorithm
+        this.bubbleSortState = undefined; 
+        this.selectionSortState = undefined;
     }
 
     componentDidMount(){
         this.generateSet(this.state.arraySize);
     }
- 
 
-    ///
+    resetSorts = () => {
+        this.bubbleSortState = undefined 
+    }
+ 
+    isSorting = ()=>{
+        if(this.bubbleSortState !== undefined || this.selectionSortState !== undefined){
+            return false; 
+        }
+        return false;
+    }
+
     generateSet = (size) => {
         const array = []
 
@@ -32,7 +42,9 @@ export default class Visualizer extends React.Component{
             array.push(randomNumber(5,500));
         }
 
-        this.setState({array: array, arraySize:size});
+        this.setState({array: array, arraySize:size, arraySorted: false});
+        this.bubbleSortState = undefined;
+        this.selectionSortState = undefined;
     } 
 
     *bubble(){
@@ -43,50 +55,96 @@ export default class Visualizer extends React.Component{
     
             for(let j = 0; j < size - 1 - i; j ++){
                 if(array[j] < array[j+1]){
-                    [array[j], array[j+1]] = [array[j+1], array[j]]
-                    yield [j,j+1,true]
+                    yield [j,j+1,true];
+                    [array[j], array[j+1]] = [array[j+1], array[j]];
                 }else{
-                    yield [j, j+1, false]
+                    yield [j, j+1, false];
                 }
             }
         }
         this.bubbleSortState = undefined
     }
 
+    *selection(){
+        let size = this.state.arraySize; 
+        let array = this.state.array
+        let minIndex = 0 
+
+        for(let i = 0; i <size-1; i++){
+            minIndex = i; 
+            for(let j = i; j < size; j++){
+                if(array[j] > array[minIndex]){
+                    minIndex = j; 
+                }
+            }
+            [array[i], array[minIndex]] = [array[minIndex], array[i]]; 
+        }
+
+    }
+
     bubbleSort = async() => {
+
         let state
         let done = false 
-        const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms))
-        if(this.bubbleSortState === undefined){
-            this.bubbleSortState = this.bubble()
-        }
+        const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms)) // delay promise
         
-        while(done === false){
-            state = this.bubbleSortState.next()
+        if(this.bubbleSortState === undefined && this.state.arraySorted === false){
+            this.bubbleSortState = this.bubble()
+            let speed = Math.pow(2,(-this.state.arraySize + 1000)) + 10
+            console.log(speed)
+            while(done === false){
+                state = this.bubbleSortState.next()
 
-            if(state === undefined){
-                done = false
-            }else{
-                done = state.done    
+                if(state.done === true){
+                    done = true
+                }else{
+                    let arrayBars= document.getElementsByClassName('Bar')
+
+                    if(state.value[2] === true){
+                        arrayBars[state.value[0]].style.backgroundColor = 'red';
+                        arrayBars[state.value[1]].style.backgroundColor = 'green';
+                        await wait(speed); 
+                        arrayBars[state.value[0]].style.backgroundColor = 'aqua';
+                        arrayBars[state.value[1]].style.backgroundColor = 'aqua';
+    
+                    }else{
+                        arrayBars[state.value[0]].style.backgroundColor = 'red'; 
+                        arrayBars[state.value[1]].style.backgroundColor = 'red';
+                        await wait(speed); 
+                        arrayBars[state.value[0]].style.backgroundColor = 'aqua';
+                        arrayBars[state.value[1]].style.backgroundColor = 'aqua';
+                    }
+
+        
+                    this.setState({array:this.state.array})
+                    
+                }
             }
 
-            let arrayBars= document.getElementsByClassName('Bar')
-            arrayBars[state.value[0]].style.backgroundColor = 'red'
-            await wait(1);
-            
-            arrayBars[state.value[0]].style.backgroundColor = 'aqua'
+        } 
+        this.resetSorts()
+        this.setState({ arraySorted: true})
+    }
 
-            this.setState({array:this.state.array})
-        }
-        
+    selectionSort = async() =>{
+        const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms)) // delay promise
     }
     
-    
 
+    sort = (type)=>{
+        if(type === "BubbleSort"){
+            this.bubbleSort();
+        }else if(type === "SelectionSort"){
+            
+        }
+    }
+    
     handleSlideChange = (e) => {
-        this.setState({arraySize : e.target.value});
-        console.log(this.state.arraySize)
-        this.generateSet(this.state.arraySize);
+        let size = parseInt(e.target.value)
+        this.setState({arraySize : size});
+
+        this.generateSet(size)
+        
     }
 
     render = () => {
@@ -101,14 +159,17 @@ export default class Visualizer extends React.Component{
             <div className = "container">
                 {this.bars}
             </div>
-            <button onClick= {()=>this.generateSet(this.state.arraySize)}>Generate Set</button>
+            <div className = "controls">
+            <button className = "btn1" onClick= {()=>this.generateSet(this.state.arraySize)}>Generate Set</button>
             <input id ="slider" 
             type={"range"} 
-            min = {0} max = {120} 
+            min = {0} max = {100} 
             onChange={this.handleSlideChange}
             value = {this.state.arraySize}/>
-            <button onClick= {this.bubbleSort}>Sort Set</button>
+            <button className = "btn1" onClick= {this.bubbleSort}>Sort Set</button>
             <div className ="value">{this.state.arraySize}</div>
+            </div>
+        
             </div>
 
         );

@@ -1,15 +1,29 @@
 .container{
+
     position: absolute; 
     align-content: center;
     left: 100px;
     top: 100px;
+
 }
 
 .Bar{
+
     display: inline-block;
     width: 4px; 
     background-color: aqua;
     margin : 0 3px;
 
+}
 
+.btn1{
+    background-color: white;
+    border-radius: 10px;
+    height : auto;
+    font-size: 15px;
+}
+
+.controls{
+    position: absolute;
+    margin-top : 10px;
 }
