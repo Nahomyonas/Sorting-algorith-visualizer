@@ -1,5 +1,6 @@
 import React from 'react'; 
-import "./Visualizer.css"
+import "./Visualizer.css";
+import bubble1 from './BubbleSort';
 
 const ARRAY_SIZE = 50;
 
@@ -12,29 +13,37 @@ export default class Visualizer extends React.Component{
         this.state = {
             array : [],
             arraySize: ARRAY_SIZE,
-            arraySorted: false
+            arraySorted: false, 
+            speed: 30
         }
 
         this.selection = this.selection.bind(this) // binding selection sort algorithm
         this.bubbleSortState = undefined; 
-        this.selectionSortState = undefined;
+        this.selectionState = undefined;
     }
 
+    // generates an array of random numbers on mount 
     componentDidMount(){
         this.generateSet(this.state.arraySize);
     }
 
+    // resets all sort states 
+    // precondition to start any sort algorithm 
     resetSorts = () => {
         this.bubbleSortState = undefined 
+        this.selectionState = undefined 
     }
  
+    // checks if array is currently getting sorted 
+    // avoids running of multiple sorts at a time 
     isSorting = ()=>{
-        if(this.bubbleSortState !== undefined || this.selectionSortState !== undefined){
-            return false; 
+        if(this.bubbleSortState !== undefined || this.selectionState !== undefined){
+            return true; 
         }
         return false;
     }
 
+    // creates an array of random number of size and sets state
     generateSet = (size) => {
         const array = []
 
@@ -43,8 +52,7 @@ export default class Visualizer extends React.Component{
         }
 
         this.setState({array: array, arraySize:size, arraySorted: false});
-        this.bubbleSortState = undefined;
-        this.selectionSortState = undefined;
+        this.resetSorts()
     } 
 
     *bubble(){
@@ -54,16 +62,18 @@ export default class Visualizer extends React.Component{
         for(let i = 0; i < size -1; i++){
     
             for(let j = 0; j < size - 1 - i; j ++){
-                if(array[j] < array[j+1]){
+                if(array[j] > array[j+1]){
                     yield [j,j+1,true];
                     [array[j], array[j+1]] = [array[j+1], array[j]];
                 }else{
                     yield [j, j+1, false];
                 }
+                this.setState({array:array})
             }
         }
         this.bubbleSortState = undefined
     }
+
 
     *selection(){
         let size = this.state.arraySize; 
@@ -73,28 +83,29 @@ export default class Visualizer extends React.Component{
         for(let i = 0; i <size-1; i++){
             minIndex = i; 
             for(let j = i; j < size; j++){
-                if(array[j] > array[minIndex]){
-                    minIndex = j; 
+                if(array[j] < array[minIndex]){
+                    minIndex = j;
                 }
+                yield[i, j]
             }
+            
             [array[i], array[minIndex]] = [array[minIndex], array[i]]; 
+            this.setState({array: array})
         }
-
     }
 
     bubbleSort = async() => {
-
         let state
         let done = false 
         const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms)) // delay promise
         
-        if(this.bubbleSortState === undefined && this.state.arraySorted === false){
+        if(this.isSorting() === false && this.state.arraySorted === false){
             this.bubbleSortState = this.bubble()
-            let speed = Math.pow(2,(-this.state.arraySize + 1000)) + 10
-            console.log(speed)
+            //this.bubbleSortState = bubble1()
+
             while(done === false){
                 state = this.bubbleSortState.next()
-
+                //this.setState({array:state[3]})
                 if(state.done === true){
                     done = true
                 }else{
@@ -103,14 +114,14 @@ export default class Visualizer extends React.Component{
                     if(state.value[2] === true){
                         arrayBars[state.value[0]].style.backgroundColor = 'red';
                         arrayBars[state.value[1]].style.backgroundColor = 'green';
-                        await wait(speed); 
+                        await wait(this.state.speed); 
                         arrayBars[state.value[0]].style.backgroundColor = 'aqua';
                         arrayBars[state.value[1]].style.backgroundColor = 'aqua';
     
                     }else{
                         arrayBars[state.value[0]].style.backgroundColor = 'red'; 
                         arrayBars[state.value[1]].style.backgroundColor = 'red';
-                        await wait(speed); 
+                        await wait(this.state.speed); 
                         arrayBars[state.value[0]].style.backgroundColor = 'aqua';
                         arrayBars[state.value[1]].style.backgroundColor = 'aqua';
                     }
@@ -127,24 +138,42 @@ export default class Visualizer extends React.Component{
     }
 
     selectionSort = async() =>{
+        let state
+        let done = false 
         const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms)) // delay promise
+
+        if(!this.isSorting() && this.state.arraySorted === false){
+            this.selectionState = this.selection()
+
+            while(done === false){
+                state = this.selectionState.next()
+                let arrayBars= document.getElementsByClassName('Bar')
+                arrayBars[state.value[0]].style.backgroundColor = 'red';
+                arrayBars[state.value[1]].style.backgroundColor = 'green';
+                await wait(this.state.speed); 
+                arrayBars[state.value[0]].style.backgroundColor = 'aqua';
+                arrayBars[state.value[1]].style.backgroundColor = 'aqua';
+                this.setState({array:this.state.array})
+                done = state.done
+                
+            }
+
+        }
+        this.resetSorts()
+        this.setState({ arraySorted: true})
     }
     
 
-    sort = (type)=>{
-        if(type === "BubbleSort"){
-            this.bubbleSort();
-        }else if(type === "SelectionSort"){
-            
-        }
-    }
     
     handleSlideChange = (e) => {
         let size = parseInt(e.target.value)
         this.setState({arraySize : size});
-
         this.generateSet(size)
-        
+    }
+
+    handleSlideChange2 = (e) => {
+        let speed = parseInt(e.target.value)
+        this.setState({speed : speed});
     }
 
     render = () => {
@@ -161,17 +190,25 @@ export default class Visualizer extends React.Component{
             </div>
             <div className = "controls">
             <button className = "btn1" onClick= {()=>this.generateSet(this.state.arraySize)}>Generate Set</button>
+            <span className = "slider-spn">size: </span>
             <input id ="slider" 
             type={"range"} 
             min = {0} max = {100} 
             onChange={this.handleSlideChange}
             value = {this.state.arraySize}/>
-            <button className = "btn1" onClick= {this.bubbleSort}>Sort Set</button>
+            <span className = "slider-spn">Speed:</span>
+            <input id ="slider" 
+            type={"range"} 
+            min = {0} max = {1000} 
+            onChange={this.handleSlideChange2}
+            value = {this.state.speed}/>
+            <button className = "btn1" onClick= {this.bubbleSort}>Bubble Sort</button>
+            <button className = "btn1" onClick= {this.selectionSort}>Selection Sort</button>
             <div className ="value">{this.state.arraySize}</div>
             </div>
         
             </div>
-
+            
         );
     };
 }
