@@ -1,6 +1,6 @@
 .container{
 
-    position: absolute; 
+ 
     align-content: center;
     left: 100px;
     top: 100px;
@@ -12,7 +12,9 @@
     display: inline-block;
     width: 4px; 
     background-color: aqua;
-    margin : 0 3px;
+    margin-top: 20px;
+    margin-left:1.5px;
+    margin-right:1.5px;
 
 }
 
@@ -24,7 +26,6 @@
 }
 
 .controls{
-    position: absolute;
     margin-top : 10px;
 }
 

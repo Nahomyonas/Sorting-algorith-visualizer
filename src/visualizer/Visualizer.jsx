@@ -1,6 +1,9 @@
 import React from 'react'; 
 import "./Visualizer.css";
-import MergeSort from "./algorithms/MergeSort.js"
+import bubble1 from './algorithms/BubbleSort';
+import MergeSort from "./algorithms/MergeSort.js";
+import selection from './algorithms/SelectionSort';
+
 
 const ARRAY_SIZE = 50;
 
@@ -18,9 +21,13 @@ export default class Visualizer extends React.Component{
             currComp: []
         }
 
-        this.selection = this.selection.bind(this) // binding selection sort algorithm
+        this.MIN_SPEED = 0; 
+        this.MAX_SPEED = 400;
+
         this.bubbleSortState = undefined; 
         this.selectionState = undefined;
+        this.mergeState = undefined; 
+       
     }
 
     // generates an array of random numbers on mount 
@@ -33,12 +40,13 @@ export default class Visualizer extends React.Component{
     resetSorts = () => {
         this.bubbleSortState = undefined 
         this.selectionState = undefined 
+        this.mergeState = undefined 
     }
 
     // checks if array is currently getting sorted 
     // avoids running of multiple sorts at a time 
     isSorting = ()=>{
-        if(this.bubbleSortState !== undefined || this.selectionState !== undefined){
+        if(this.bubbleSortState !== undefined || this.selectionState !== undefined || this.mergeState !== undefined){
             return true; 
         }
         return false;
@@ -52,57 +60,28 @@ export default class Visualizer extends React.Component{
             array.push(randomNumber(5,500));
         }
 
-        this.setState({array: array, arraySize:size, arraySorted: false});
         this.resetSorts()
+        this.setState({array: array, arraySize:size, arraySorted: false});
+
     } 
 
 
     ///////////////////////////////////////////////////////////////////////////////////
     //Sorting
-    *bubble(){
-        let size= this.state.array.length;
+
+    mergeSort = async() => {
         let array = this.state.array
-    
-        for(let i = 0; i < size -1; i++){
-    
-            for(let j = 0; j < size - 1 - i; j ++){
-                if(array[j] > array[j+1]){
-                    yield [j,j+1,true];
-                    [array[j], array[j+1]] = [array[j+1], array[j]];
-                }else{
-                    yield [j, j+1, false];
-                }
-                this.setState({array:array})
-                //to make this function to a separate file try yeilding the array 
-                //after swapping values and set the state in bubbleSort function 
-                //then setstate of array in that function
+
+        if(!this.state.arraySorted && !this.isSorting()){
+            let animArray = MergeSort([...array], 0 , array.length-1); 
+            const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms)) // delay promise
+            for(let i = 0; i < animArray.length; i++){
+                await wait(this.state.speed)
+                this.setState({array:animArray[i]});
             }
+            this.setState({arraySorted: true});     // setting state of array sorted to true
+            
         }
-    }
-
-    *selection(){
-        let size = this.state.arraySize
-        let array = this.state.array
-        let minIndex = 0 
-
-        for(let i = 0; i <size-1; i++){
-            minIndex = i
-            for(let j = i; j < size; j++){
-                if(array[j] < array[minIndex]){
-                    minIndex = j
-                    yield[i, j, minIndex , true]
-                }
-                yield[i, j, minIndex, false]
-            }
-            [array[i], array[minIndex]] = [array[minIndex], array[i]]; 
-            this.setState({array: array})
-        }
-    }
-
-    mergeSort = () => {
-        let array = this.state.array
-        MergeSort(array, 0, this.state.arraySize-1) 
-        this.setState({array: this.state.array})
     }
     
     bubbleSort = async() => {
@@ -111,12 +90,11 @@ export default class Visualizer extends React.Component{
         const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms)) // delay promise
         
         if(this.isSorting() === false && this.state.arraySorted === false){
-            this.bubbleSortState = this.bubble()
-            //this.bubbleSortState = bubble1()
-            let arrayBars= document.getElementsByClassName('Bar')
+            this.bubbleSortState = bubble1(this.state.array);       // initiates the generator function for bubble sort
+            let arrayBars= document.getElementsByClassName('Bar');  // storing visual representation of array in variable 
+
             while(done === false){
-                state = this.bubbleSortState.next()
-                //this.setState({array:state[3]})
+                state = this.bubbleSortState.next()     // storing the yield of generator function as state
                 
                 //Color Animation 
                 if(state.done === true){
@@ -147,7 +125,7 @@ export default class Visualizer extends React.Component{
         let arrayBars= document.getElementsByClassName('Bar')
 
         if(!this.isSorting() && this.state.arraySorted === false){
-            this.selectionState = this.selection()
+            this.selectionState = selection(this.state.array)
 
             while(done === false){
 
@@ -164,7 +142,7 @@ export default class Visualizer extends React.Component{
                 arrayBars[state.value[0]].style.backgroundColor = 'aqua';
                 arrayBars[state.value[1]].style.backgroundColor = 'aqua';
 
-                this.setState({array:this.state.array})
+                this.setState({array:state.value[4]})
                 done = state.done
                 
             }
@@ -174,19 +152,21 @@ export default class Visualizer extends React.Component{
         this.setState({ arraySorted: true})
     }
     
+    // ARRAY SIZE HANDLER
     handleSlideChange = (e) => {
         let size = parseInt(e.target.value)
         this.setState({arraySize : size});
         this.generateSet(size)
     }
-
+    
+    // SORT SPEED HANDLER 
     handleSlideChange2 = (e) => {
         let speed = parseInt(e.target.value)
         this.setState({speed : speed});
     }
 
     render = () => {
-        this.bars = this.state.array.map((value,index) =>(
+        let bars = this.state.array.map((value,index) =>(
             <div className = "Bar" key = {index} id = {index} style= {{height: `${value}px`}}>
                 
             </div>
@@ -194,9 +174,7 @@ export default class Visualizer extends React.Component{
        
         return(
             <div className='main'>
-                <div className = "container">
-                    {this.bars}
-                </div>
+                
                 <div className = "controls">
 
                     <button className = "btn1" onClick= {()=>this.generateSet(this.state.arraySize)}>Generate Set</button>
@@ -219,14 +197,16 @@ export default class Visualizer extends React.Component{
                     <span className = "slider-spn">Speed:</span>
                     <input id ="slider" 
                     type={"range"} 
-                    min = {0} max = {1000} 
+                    min = {this.MIN_SPEED} max = {this.MAX_SPEED} 
                     onChange={this.handleSlideChange2}
                     value = {this.state.speed}/>
 
                 </div>
-                <div>
-                    <h6>{this.state.currComp[0]}, {this.state.currCompif}</h6>
+
+                <div className = "container">
+                    {bars}
                 </div>
+                
             </div>
             
         );
@@ -237,3 +217,4 @@ export default class Visualizer extends React.Component{
 function randomNumber(min, max) { 
     return Math.floor(Math.random() * (max - min) + min);
 } 
+
