@@ -53,5 +53,5 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          port: 3000
+          port: ${{ secrets.SERVER_PASSWORD }}
           script: bash update.sh
